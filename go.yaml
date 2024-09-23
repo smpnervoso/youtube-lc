@@ -1,0 +1,63 @@
+name: go
+
+on:
+- push
+- pull_request
+
+jobs:
+ lint:
+  strategy:
+      matrix:
+        plataform: [ubuntu-22.04]
+        go-version: [1.21.x, 1x]
+  runs-on: ${{ matrix.plataform}}
+  name: Linters (análise estática) para Go
+  steps: 
+   - name:  Check-out do código no diretório do módulo Go.
+     uses: actions/checkout@v3
+
+   - name: Instalar Go
+     uses: actions/setup-go@v4
+     with:
+          
+        go-version: ${{ matrix.go-version }}
+
+   - name: Linting e Vetiing, 
+     run: make lint 
+
+  test: 
+   strategy:
+    matrix:
+     plataform: [ubuntu-22.04]
+     go-version: [1.21.x, 1.x]
+   runs-on: ${{ matrix.-plataform}}
+   name: Testes de integração
+   env: 
+    GOBIN: /tmp/.bin
+  steps:
+   - name: Check-out do código no diretório do módulo Go.
+     uses: actions/checkout@v3
+
+   - name: Instalar go
+     uses: actions/setup-go@v4
+     with:
+      go-version: ${{ matrix.go-version }}
+
+   - name: Instalar ffmpeg
+     run: |
+         sudo apt-get update
+         sudo apt-get install ffmpeg
+
+   - name: Rodar testes
+     run: make test-integration
+
+   - name: Arquivar artefatos
+     uses: actions/upload-artifact@v3
+     with:
+      name: output
+      path: output
+
+   - name: Carregar relatório de cobertura
+     uses: codecov/codecov-action@v3
+     with:
+      file: coverage.out
